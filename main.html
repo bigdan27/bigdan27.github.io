@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Competitive Pokémon Study Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Pokémon Inspired Neutrals -->
+    <!-- Application Structure Plan: A single-page application with a top navigation bar for smooth scrolling to distinct sections: Key Concepts (accordion cards), Team Roles (interactive flashcards), and a final Quiz section. This structure breaks down the study guide into manageable, interactive chunks, promoting active learning over passive reading. -->
+    <!-- Visualization & Content Choices: Key Concepts will be presented in expandable cards to avoid overwhelming the user. Team roles will be interactive flashcards (HTML/CSS reveal on click) for active recall. The physical/special attack dynamic will be illustrated with a simple HTML/CSS diagram. The key questions are transformed into a JS-powered quiz for self-assessment. No charts are needed as there is no quantitative data. CONFIRMATION: NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9F9;
+        }
+        .concept-card .details, .role-card .back {
+            display: none;
+        }
+        .concept-card.open .details, .role-card.open .back {
+            display: block;
+        }
+        .quiz-option.correct {
+            background-color: #D1FAE5;
+            border-color: #10B981;
+        }
+        .quiz-option.incorrect {
+            background-color: #FEE2E2;
+            border-color: #EF4444;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <svg class="h-8 w-8 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.486 2 2 6.486 2 12C2 17.514 6.486 22 12 22C17.514 22 22 17.514 22 12C22 6.486 17.514 2 12 2ZM12 20C7.589 20 4 16.411 4 12C4 7.589 7.589 4 12 4C16.411 4 20 7.589 20 12C20 16.411 16.411 20 12 20Z" />
+                            <path d="M12 6C9.794 6 8 7.794 8 10C8 12.206 9.794 14 12 14C14.206 14 16 12.206 16 10C16 7.794 14.206 6 12 6ZM12 12C10.897 12 10 11.103 10 10C10 8.897 10.897 8 12 8C13.103 8 14 8.897 14 10C14 11.103 13.103 12 12 12Z" />
+                        </svg>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-10 flex items-baseline space-x-4">
+                            <a href="#concepts" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Key Concepts</a>
+                            <a href="#roles" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Team Roles</a>
+                            <a href="#synergy" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Synergy & Strategy</a>
+                            <a href="#quiz" class="text-gray-600 hover:bg-gray-100 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">Test Your Knowledge</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <section id="intro" class="text-center mb-16">
+            <h1 class="text-4xl sm:text-5xl font-bold text-gray-900 tracking-tight">Competitive Pokémon Study Guide</h1>
+            <p class="mt-4 max-w-2xl mx-auto text-lg text-gray-600">This guide covers the fundamental principles of building effective competitive Pokémon teams. Master these concepts to elevate your battling skills.</p>
+        </section>
+
+        <section id="concepts" class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-red-500 pb-2">Key Concepts</h2>
+            <div class="space-y-4" id="concepts-container">
+            </div>
+        </section>
+
+        <section id="roles" class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-blue-500 pb-2">Team Roles & Vocabulary</h2>
+            <p class="text-gray-600 mb-6">Click on a card to flip it and reveal the definition. Understanding these roles is essential for building a balanced team.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="roles-container">
+            </div>
+        </section>
+        
+        <section id="synergy" class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-yellow-500 pb-2">Synergy & Strategy</h2>
+             <div class="bg-white p-6 rounded-lg shadow-md">
+                <h3 class="text-xl font-semibold mb-3">Physical vs. Special Attackers</h3>
+                <p class="text-gray-600 mb-4">A critical distinction in Pokémon is the difference between physical and special attacks. A well-balanced team can handle threats from both categories. This was especially important in Gen 3, where the category was determined by the move's type.</p>
+                <div class="flex flex-col md:flex-row justify-around items-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="text-center p-4 border border-gray-200 rounded-lg bg-red-50 w-full">
+                        <h4 class="font-semibold text-red-700">Physical Attacker</h4>
+                        <p class="text-sm text-gray-600">Uses <span class="font-bold">Attack</span> stat</p>
+                        <div class="my-2 text-2xl text-red-500">→</div>
+                        <p class="text-sm text-gray-600">Targets opponent's <span class="font-bold">Defense</span> stat</p>
+                    </div>
+                    <div class="text-center p-4 border border-gray-200 rounded-lg bg-blue-50 w-full">
+                        <h4 class="font-semibold text-blue-700">Special Attacker</h4>
+                        <p class="text-sm text-gray-600">Uses <span class="font-bold">Special Attack</span> stat</p>
+                        <div class="my-2 text-2xl text-blue-500">→</div>
+                        <p class="text-sm text-gray-600">Targets opponent's <span class="font-bold">Special Defense</span> stat</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quiz" class="mb-16">
+            <h2 class="text-3xl font-bold text-gray-900 mb-8 border-b-2 border-green-500 pb-2">Test Your Knowledge</h2>
+            <div class="bg-white p-6 rounded-lg shadow-md space-y-8" id="quiz-container">
+            </div>
+            <div class="mt-8 flex justify-center">
+                <button id="check-answers-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">Check Answers</button>
+            </div>
+             <div id="quiz-results" class="mt-8 text-center text-2xl font-bold hidden"></div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+            <p>&copy; 2025 Interactive Pokémon Study Guide. For educational purposes only.</p>
+        </div>
+    </footer>
+
+    <script>
+        const concepts = [
+            {
+                title: 'Dedicated vs. Mixed Walls',
+                summary: "A dedicated wall maximizes a single defensive stat, making it a specialist. A mixed wall distributes EVs between both defenses to be more versatile.",
+                details: "A **dedicated wall** maximizes a single defensive stat (either Physical Defense or Special Defense) with full EV investment and a complementary nature, making it a specialist at tanking one type of attack. In contrast, a **mixed wall** distributes EVs between both defensive stats to handle a wider variety of threats, though it's less effective against each one."
+            },
+            {
+                title: 'Strategic EV Allocation ("Saving EVs")',
+                summary: "Placing EVs in a different stat because a Pokémon's primary stat is already high enough to be effective, allowing for more versatility.",
+                details: "The concept of 'saving EVs' involves placing EVs in a different stat because a Pokémon's primary stat is already so high that it doesn't need a full investment to perform its role. This allows the Pokémon to be more versatile and contribute to the team in multiple ways, like adding bulk or speed."
+            },
+            {
+                title: 'Weather Setting',
+                summary: "Using Pokémon with abilities like Drought (sun) or Drizzle (rain) to create field conditions that power up your team.",
+                details: "Certain Pokémon, like Groudon with its **Drought** ability, are essential for setting up the weather that the rest of the team is built around. This weather then activates abilities like **Chlorophyll** (doubles Speed in sun) and **Swift Swim** (doubles Speed in rain), turning key Pokémon into potent sweepers."
+            },
+            {
+                title: 'Synergistic Movesets',
+                summary: "Choosing moves that work together to create a powerful combined effect, like Breloom's Spore and Focus Punch combo.",
+                details: "The most effective Pokémon use moves that work together for a combined effect. For example, Breloom's **Spore** can put an opponent to sleep, which then gives Breloom a free turn to set up a **Substitute** to safely use **Focus Punch**."
+            }
+        ];
+
+        const roles = [
+            { term: 'Dedicated Physical Wall', definition: 'A Pokémon that maximizes its physical Defense to absorb physical attacks.' },
+            { term: 'Dedicated Special Wall', definition: 'A Pokémon that maximizes its Special Defense to absorb special attacks.' },
+            { term: 'Weather Setter', definition: 'A Pokémon whose primary job is to create field conditions (like sun or rain) that benefit the rest of the team.' },
+            { term: 'Sweeper', definition: 'A Pokémon with high offensive stats (Attack/Special Attack and Speed) used to defeat multiple opposing Pokémon in a row.' },
+            { term: 'Disruptor', definition: 'A Pokémon that uses status moves (e.g., Sleep, Paralysis) to interfere with the opponent\'s strategy.' },
+            { term: 'Entry Hazards', definition: 'Traps like Spikes that are set on the field to passively damage any Pokémon that switches in.' }
+        ];
+
+        const quizQuestions = [
+            {
+                question: "What is the key benefit of having a bulky Charizard on a Groudon sun team?",
+                options: ["Its added bulk allows it to safely switch in on predicted Ground-type attacks.", "It can use its high Special Attack to out-speed most opponents.", "The Petaya Berry item makes it a more reliable Special Wall.", "It can set up Spikes to damage the opponent’s team."],
+                answer: 0
+            },
+            {
+                question: "Why was the bulky Typhlosion build considered less effective than a more focused one?",
+                options: ["It lacked the necessary EVs to be a fast sweeper.", "The scattered EVs didn't support a specific strategic purpose.", "It was too slow to benefit from the sun's Speed-doubling effect.", "Its Nature lowered its Attack stat, making it useless."],
+                answer: 1 
+            },
+            {
+                question: "What is the primary role of Skarmory on our sun team?",
+                options: ["A fast attacker that can sweep the opponent’s team.", "A mixed wall that can handle both physical and special hits.", "A support Pokémon that sets up entry hazards and uses Roar to force switches.", "A special wall that can take hits from special attackers."],
+                answer: 2
+            },
+            {
+                question: "The purpose of using Breloom's Spore and Substitute together is to:",
+                options: ["Increase its Speed and out-speed the opponent.", "Safely set up a powerful Focus Punch behind the Substitute.", "Heal its HP and become more bulky.", "Set up entry hazards and wear down the opponent."],
+                answer: 1
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const conceptsContainer = document.getElementById('concepts-container');
+            concepts.forEach(concept => {
+                const card = document.createElement('div');
+                card.className = 'concept-card bg-white p-6 rounded-lg shadow-md cursor-pointer transition-shadow hover:shadow-lg';
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-semibold">${concept.title}</h3>
+                        <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                    <p class="text-gray-600 mt-2">${concept.summary}</p>
+                    <div class="details mt-4 border-t pt-4 text-gray-700">
+                        <p>${concept.details}</p>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    card.classList.toggle('open');
+                    card.querySelector('svg').classList.toggle('rotate-180');
+                });
+                conceptsContainer.appendChild(card);
+            });
+
+            const rolesContainer = document.getElementById('roles-container');
+            roles.forEach(role => {
+                const card = document.createElement('div');
+                card.className = 'role-card bg-white rounded-lg shadow-md cursor-pointer transition-transform transform hover:-translate-y-1';
+                card.innerHTML = `
+                    <div class="p-6">
+                        <div class="front">
+                            <h3 class="text-lg font-semibold text-center">${role.term}</h3>
+                            <p class="text-center text-sm text-gray-500 mt-2">Click to reveal</p>
+                        </div>
+                        <div class="back mt-4 border-t pt-4 text-gray-700">
+                            <p>${role.definition}</p>
+                        </div>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    card.classList.toggle('open');
+                });
+                rolesContainer.appendChild(card);
+            });
+            
+            const quizContainer = document.getElementById('quiz-container');
+            quizQuestions.forEach((q, index) => {
+                const questionEl = document.createElement('div');
+                questionEl.className = 'quiz-question';
+                let optionsHTML = q.options.map((opt, i) => `
+                    <label class="quiz-option block border-2 border-gray-200 p-4 rounded-lg hover:bg-gray-50 cursor-pointer">
+                        <input type="radio" name="question-${index}" value="${i}" class="mr-3">
+                        ${opt}
+                    </label>
+                `).join('');
+                questionEl.innerHTML = `
+                    <p class="font-semibold mb-4">${index + 1}. ${q.question}</p>
+                    <div class="space-y-3">${optionsHTML}</div>
+                `;
+                quizContainer.appendChild(questionEl);
+            });
+
+            document.getElementById('check-answers-btn').addEventListener('click', () => {
+                let score = 0;
+                quizQuestions.forEach((q, index) => {
+                    const selected = document.querySelector(`input[name="question-${index}"]:checked`);
+                    const labels = document.querySelectorAll(`input[name="question-${index}"]`);
+                    
+                    labels.forEach(labelInput => {
+                         const parentLabel = labelInput.parentElement;
+                         parentLabel.classList.remove('correct', 'incorrect');
+                    });
+
+                    if (selected) {
+                        const answerIndex = parseInt(selected.value);
+                        const parentLabel = selected.parentElement;
+                        if (answerIndex === q.answer) {
+                            score++;
+                            parentLabel.classList.add('correct');
+                        } else {
+                            parentLabel.classList.add('incorrect');
+                            // Also highlight the correct answer
+                             document.querySelector(`input[name="question-${index}"][value="${q.answer}"]`).parentElement.classList.add('correct');
+                        }
+                    }
+                });
+                const resultsEl = document.getElementById('quiz-results');
+                resultsEl.textContent = `You scored ${score} out of ${quizQuestions.length}!`;
+                resultsEl.classList.remove('hidden');
+            });
+
+        });
+    </script>
+</body>
+</html>
