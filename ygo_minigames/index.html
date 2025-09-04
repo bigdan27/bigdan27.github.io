@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YGO Mini-Games Hub</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="main-title">YGO Mini-Games Hub</h1>
+        <div id="game-selection">
+            <h2>Select a Game</h2>
+            <div class="game-buttons">
+                <button class="game-button" data-game="guessTheCard">Guess the Card</button>
+                <button class="game-button" data-game="guessTheArt">Guess the Art</button>
+                <button class="game-button" data-game="guessTheName">Guess the Name</button>
+                <button class="game-button" data-game="productGuessing">Product Guessing</button>
+                <button class="game-button" data-game="smallWorldChallenge">Small World Challenge</button>
+                <button class="game-button" data-game="whichCardIsOlder">Which Card Is Older?</button>
+            </div>
+        </div>
+
+        <div id="game-area" class="hidden">
+            <h2 id="game-title"></h2>
+            <p id="game-prompt"></p>
+            <div id="image-container">
+                <img id="card-image" src="" alt="Yu-Gi-Oh! Card">
+            </div>
+            <div id="card-pair-container" class="card-pair hidden">
+                <div class="card-container" id="card-left">
+                    <img id="card-image-left" src="" alt="Card Left">
+                </div>
+                <div class="card-container" id="card-right">
+                    <img id="card-image-right" src="" alt="Card Right">
+                </div>
+            </div>
+            <div id="options-container" class="options-container hidden"></div>
+            <div id="input-container" class="input-container hidden">
+                <input type="text" id="user-input" placeholder="Type your answer here">
+                <button id="submit-btn">Submit</button>
+            </div>
+            <div id="card-info" class="card-info hidden"></div>
+            <p id="feedback"></p>
+            <p id="score-counter">Score: 0</p>
+            <button id="next-round-btn" class="hidden">Next Round</button>
+            <button id="main-menu-btn">Main Menu</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
