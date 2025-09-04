@@ -158,6 +158,42 @@
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
+
+        .card-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            margin-bottom: 1rem;
+        }
+
+        .what-card-is-older-container {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .what-card-is-older-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .what-card-is-older-card:hover {
+            transform: scale(1.05);
+        }
+
+        .small-world-card-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin: 1rem;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex flex-col items-center justify-center min-h-screen">
@@ -175,7 +211,7 @@
             <!-- Game 2: Guess the Name -->
             <div class="card p-6 flex flex-col items-center justify-between">
                 <h2 class="text-2xl font-bold mb-4 text-center">Guess the Name</h2>
-                <p class="text-sm text-gray-400 mb-4 text-center">Guess the card's name from its full image.</p>
+                <p class="text-sm text-gray-400 mb-4 text-center">Guess the card's name from its artwork.</p>
                 <button class="button customize-button" data-game="guess-the-name">Go</button>
             </div>
 
@@ -461,13 +497,12 @@
             });
         });
 
-
         // Start Game buttons
         document.getElementById('start-guess-the-art').addEventListener('click', () => startGame('guess-the-art'));
         document.getElementById('start-guess-the-name').addEventListener('click', () => startGame('guess-the-name'));
         document.getElementById('start-product-guessing').addEventListener('click', () => startGame('product-guessing'));
         document.getElementById('start-small-world-challenge').addEventListener('click', () => startGame('small-world-challenge'));
-        document.getElementById('start-what-card-is-older').addEventListener('click', () => startGame('what-card-is-older'));
+        document.getElementById('start-what-is-older').addEventListener('click', () => startGame('what-card-is-older'));
 
         function startGame(gameName) {
             // Get settings based on the game name
@@ -662,323 +697,292 @@
             const randomCards = new Set();
             while (randomCards.size < count) {
                 const card = cards[Math.floor(Math.random() * cards.length)];
-                if (!excludeNames.includes(card.name)) {
+                if (card.card_images && card.card_images.length > 0 && !excludeNames.includes(card.name)) {
                     randomCards.add(card);
                 }
             }
             return Array.from(randomCards);
+        }
+        
+        function checkSmallWorldProperties(card1, card2, properties) {
+            if (!properties || properties.length === 0) return false;
+            
+            const sharedProperties = new Set();
+            for (const prop of properties) {
+                if (prop === 'attribute' && card1.attribute === card2.attribute) sharedProperties.add(prop);
+                if (prop === 'type' && card1.type === card2.type) sharedProperties.add(prop);
+                if (prop === 'level' && card1.level === card2.level) sharedProperties.add(prop);
+                if (prop === 'atk-def' && (card1.atk === card2.atk || card1.def === card2.def)) sharedProperties.add(prop);
+            }
+            return sharedProperties.size === 1;
         }
 
         // --- Game Logic ---
 
         // What Card is Older?
         function startWhatCardIsOlder() {
-            const card1 = cards[Math.floor(Math.random() * cards.length)];
-            let card2 = cards[Math.floor(Math.random() * cards.length)];
-            while (card1.name === card2.name || !card1.card_sets || !card2.card_sets) {
-                card2 = cards[Math.floor(Math.random() * cards.length)];
+            // Get two random cards with card_sets data
+            const filteredCards = cards.filter(card => card.card_sets && card.card_sets.length > 0);
+            if (filteredCards.length < 2) {
+                showUserMessage("Not enough cards with release dates to play this game.", 3000);
+                endGame();
+                return;
+            }
+
+            const card1 = filteredCards[Math.floor(Math.random() * filteredCards.length)];
+            let card2 = filteredCards[Math.floor(Math.random() * filteredCards.length)];
+            while (card1.name === card2.name) {
+                card2 = filteredCards[Math.floor(Math.random() * filteredCards.length)];
             }
             currentCards = [card1, card2];
-            
-            const earliestDate1 = card1.card_sets.reduce((min, set) => Math.min(min, new Date(set.set_release_date)), new Date());
-            const earliestDate2 = card2.card_sets.reduce((min, set) => Math.min(min, new Date(set.set_release_date)), new Date());
-            
-            correctAnswer = earliestDate1 < earliestDate2 ? card1.name : card2.name;
+
+            const date1 = new Date(card1.card_sets[0].set_release_date);
+            const date2 = new Date(card2.card_sets[0].set_release_date);
+            correctAnswer = date1 < date2 ? card1.name : card2.name;
 
             const gameContent = document.getElementById('game-content');
             gameContent.innerHTML = `
-                <p class="text-xl mb-4">Which card was released first?</p>
-                <div class="flex flex-col sm:flex-row gap-4 items-center justify-center">
-                    <div class="flex-1 text-center">
-                        <img src="${card1.card_images[0].image_url}" onerror="this.onerror=null;this.src='https://placehold.co/300x440/333333/FFFFFF?text=Card+Image+Missing';" alt="${card1.name}" class="rounded-lg shadow-lg mb-2 w-full max-w-sm mx-auto cursor-pointer" onclick="checkWhatCardIsOlder('${card1.name}')">
-                        <p class="text-sm text-gray-400 mt-1">${card1.name}</p>
+                <p class="text-xl mb-4">Which card was released earlier?</p>
+                <div class="what-card-is-older-container">
+                    <div class="what-card-is-older-card" data-card-name="${card1.name}">
+                        <img class="card-image" src="${card1.card_images[0].image_url_art}" alt="${card1.name}" onerror="this.src='https://placehold.co/400x400/1e1e1e/e0e0e0?text=Image+Unavailable';">
+                        <p class="mt-2 text-lg font-semibold">${card1.name}</p>
                     </div>
-                    <div class="flex-1 text-center">
-                        <img src="${card2.card_images[0].image_url}" onerror="this.onerror=null;this.src='https://placehold.co/300x440/333333/FFFFFF?text=Card+Image+Missing';" alt="${card2.name}" class="rounded-lg shadow-lg mb-2 w-full max-w-sm mx-auto cursor-pointer" onclick="checkWhatCardIsOlder('${card2.name}')">
-                        <p class="text-sm text-gray-400 mt-1">${card2.name}</p>
+                    <div class="what-card-is-older-card" data-card-name="${card2.name}">
+                        <img class="card-image" src="${card2.card_images[0].image_url_art}" alt="${card2.name}" onerror="this.src='https://placehold.co/400x400/1e1e1e/e0e0e0?text=Image+Unavailable';">
+                        <p class="mt-2 text-lg font-semibold">${card2.name}</p>
                     </div>
                 </div>
             `;
-        }
-        window.checkWhatCardIsOlder = function(guess) {
-            if (!gameActive) return;
-            gameActive = false;
-            const isCorrect = guess === correctAnswer;
-            if (isCorrect) {
-                score++;
-                showUserMessage('Correct!', 2000);
-            } else {
-                showUserMessage(`Wrong! The older card was ${correctAnswer}.`, 2000);
-            }
-            document.getElementById('score').textContent = score;
-            setTimeout(nextRound, 2000);
+            document.querySelectorAll('.what-card-is-older-card').forEach(el => {
+                el.addEventListener('click', handleAnswer);
+            });
         }
 
         // Guess the Art
         function startGuessTheArt() {
-            const correctCard = cards[Math.floor(Math.random() * cards.length)];
-            const wrongCards = getRandomCards(gameSettings.options - 1, [correctCard.name]);
-            const allCards = shuffle([correctCard, ...wrongCards]);
-            correctAnswer = correctCard.name;
-            
-            const optionsHtml = allCards.map(card => `
-                <button class="button flex-1" onclick="checkGuess('${card.name}')">${card.name}</button>
-            `).join('');
+            const chosenCard = cards[Math.floor(Math.random() * cards.length)];
+            correctAnswer = chosenCard.name;
+            const options = shuffle([chosenCard, ...getRandomCards(gameSettings.options - 1, [chosenCard.name])]);
 
             const gameContent = document.getElementById('game-content');
             gameContent.innerHTML = `
-                <p class="text-xl mb-4">Guess the card from its artwork:</p>
-                <img src="${correctCard.card_images[0].image_url_cropped}" onerror="this.onerror=null;this.src='https://placehold.co/400x400/333333/FFFFFF?text=Art+Missing';" alt="Card Artwork" class="rounded-lg shadow-lg mb-4 w-full max-w-xs mx-auto">
-                <div class="flex flex-col sm:flex-row gap-2 mt-4 w-full justify-center">
-                    ${optionsHtml}
+                <p class="text-xl mb-4">What card is this?</p>
+                <img class="card-image" src="${chosenCard.card_images[0].image_url_art}" alt="Card Artwork" onerror="this.src='https://placehold.co/400x400/1e1e1e/e0e0e0?text=Image+Unavailable';">
+                <div id="options-container" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    ${options.map(card => `<button class="button" data-card-name="${card.name}">${card.name}</button>`).join('')}
                 </div>
             `;
+            document.querySelectorAll('#options-container button').forEach(button => {
+                button.addEventListener('click', handleAnswer);
+            });
         }
 
         // Guess the Name
         function startGuessTheName() {
-            const correctCard = cards[Math.floor(Math.random() * cards.length)];
-            correctAnswer = correctCard.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const chosenCard = cards[Math.floor(Math.random() * cards.length)];
+            correctAnswer = chosenCard.name;
 
             const gameContent = document.getElementById('game-content');
-            let contentHtml = `<p class="text-xl mb-4">Guess the name of this card:</p>
-                               <img src="${correctCard.card_images[0].image_url}" onerror="this.onerror=null;this.src='https://placehold.co/300x440/333333/FFFFFF?text=Card+Image+Missing';" alt="${correctCard.name}" class="rounded-lg shadow-lg mb-4 w-full max-w-sm mx-auto">`;
+            gameContent.innerHTML = `<p class="text-xl mb-4">Guess the name of this card from its art!</p>
+                <img class="card-image" src="${chosenCard.card_images[0].image_url_art}" alt="Card Artwork" onerror="this.src='https://placehold.co/400x400/1e1e1e/e0e0e0?text=Image+Unavailable';">`;
 
             if (gameSettings.method === 'multiple-choice') {
-                const wrongCards = getRandomCards(gameSettings.options - 1, [correctCard.name]);
-                const allCards = shuffle([correctCard, ...wrongCards]);
-                const optionsHtml = allCards.map(card => `
-                    <button class="button flex-1" onclick="checkGuess('${card.name}')">${card.name}</button>
-                `).join('');
-                contentHtml += `<div class="flex flex-col sm:flex-row gap-2 mt-4 w-full justify-center">${optionsHtml}</div>`;
-            } else {
-                contentHtml += `<div class="flex flex-col items-center gap-2 mt-4 w-full max-w-sm mx-auto">
-                                   <input type="text" id="name-input" class="w-full rounded-lg px-4 py-2 text-center bg-gray-700 text-gray-100" placeholder="Type card name here">
-                                   <button id="submit-name" class="button w-full">Submit</button>
-                               </div>`;
-            }
-            gameContent.innerHTML = contentHtml;
-            
-            if (gameSettings.method === 'type-name') {
-                const nameInput = document.getElementById('name-input');
-                const submitButton = document.getElementById('submit-name');
-                submitButton.addEventListener('click', () => checkTypeGuess(nameInput.value));
-                nameInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') checkTypeGuess(nameInput.value);
+                const options = shuffle([chosenCard, ...getRandomCards(gameSettings.options - 1, [chosenCard.name])]);
+                gameContent.innerHTML += `
+                    <div id="options-container" class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${options.map(card => `<button class="button" data-card-name="${card.name}">${card.name}</button>`).join('')}
+                    </div>
+                `;
+                document.querySelectorAll('#options-container button').forEach(button => {
+                    button.addEventListener('click', handleAnswer);
                 });
-                nameInput.focus();
-            }
-        }
-        window.checkGuess = function(guess) {
-            if (!gameActive) return;
-            gameActive = false;
-            const isCorrect = guess === correctAnswer;
-            if (isCorrect) {
-                score++;
-                showUserMessage('Correct!', 2000);
             } else {
-                showUserMessage(`Wrong! The correct answer was ${correctAnswer}.`, 2000);
+                gameContent.innerHTML += `
+                    <div class="mt-4 flex flex-col items-center">
+                        <input type="text" id="name-input" class="w-full max-w-sm p-2 rounded-lg text-black" placeholder="Type card name here...">
+                        <button id="submit-guess" class="button mt-4">Submit</button>
+                    </div>
+                `;
+                document.getElementById('submit-guess').addEventListener('click', () => {
+                    const guess = document.getElementById('name-input').value;
+                    handleAnswer({ target: { dataset: { cardName: guess } } });
+                });
             }
-            document.getElementById('score').textContent = score;
-            setTimeout(nextRound, 2000);
-        }
-        window.checkTypeGuess = function(guess) {
-            if (!gameActive) return;
-            gameActive = false;
-            const normalizedGuess = guess.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const isCorrect = normalizedGuess === correctAnswer;
-            if (isCorrect) {
-                score++;
-                showUserMessage('Correct!', 2000);
-            } else {
-                showUserMessage(`Wrong! The correct answer was ${correctAnswer.name}.`, 2000);
-            }
-            document.getElementById('score').textContent = score;
-            setTimeout(nextRound, 2000);
         }
 
         // Product Guessing
         async function startProductGuessing() {
-            let setCode = gameSettings.setCode;
+            let productSet = [];
+            let cardSetCode = gameSettings.setCode;
+
             if (gameSettings.setSelection === 'random') {
-                if (allSetCodes.length === 0) {
-                    allSetCodes = [...new Set(cards.flatMap(card => card.card_sets ? card.card_sets.map(s => s.set_code.split('-')[0]) : []))];
-                }
-                setCode = allSetCodes[Math.floor(Math.random() * allSetCodes.length)];
+                const setsResponse = await fetch('https://db.ygoprodeck.com/api/v7/cardsets.php');
+                const setsData = await setsResponse.json();
+                cardSetCode = setsData[Math.floor(Math.random() * setsData.length)].set_code;
+            }
+
+            const setResponse = await fetch(`https://db.ygoprodeck.com/api/v7/cardinfo.php?cardset=${cardSetCode}`);
+            const setData = await setResponse.json();
+            if (setData.error) {
+                showUserMessage(`Error fetching set ${cardSetCode}. Please try a different set.`, 4000);
+                endGame();
+                return;
             }
             
-            productCards = cards.filter(card => card.card_sets && card.card_sets.some(s => s.set_code.split('-')[0] === setCode));
+            productCards = setData.data.filter(card => card.card_images && card.card_images.length > 0);
             guessedCards = [];
-            score = 0;
-
-            const gameContent = document.getElementById('game-content');
-            gameContent.innerHTML = `
-                <h3 class="text-2xl mb-2">Product Set: <span class="text-purple-400">${setCode}</span></h3>
-                <p class="text-lg mb-4">Guess as many cards as you can from this set!</p>
-                <div class="flex flex-col sm:flex-row items-center gap-2 mt-4 w-full max-w-sm mx-auto">
-                    <input type="text" id="guess-input" class="w-full rounded-lg px-4 py-2 text-center bg-gray-700 text-gray-100" placeholder="Enter card name">
-                    <button id="submit-guess" class="button">Submit</button>
+            
+            document.getElementById('game-content').innerHTML = `
+                <p class="text-xl mb-4">Guess cards from the set: <strong>${cardSetCode}</strong></p>
+                <img id="card-art" class="card-image" src="https://placehold.co/400x400/1e1e1e/e0e0e0?text=Card+Art+Here" alt="Card Artwork">
+                <div class="mt-4 flex flex-col items-center">
+                    <input type="text" id="product-input" class="w-full max-w-sm p-2 rounded-lg text-black" placeholder="Type card name here...">
+                    <button id="submit-product-guess" class="button mt-4">Submit</button>
+                    <button id="give-up" class="button mt-2">Give Up</button>
                 </div>
-                <div class="mt-4">
-                    <p>Guessed Cards (<span id="score">0</span>):</p>
-                    <ul id="guessed-list" class="list-disc list-inside text-left mx-auto max-w-xs mt-2"></ul>
+                <div id="guessed-list" class="mt-4 text-left w-full max-w-sm">
+                    <h3 class="font-bold">Guessed Cards:</h3>
+                    <ul id="guessed-ul" class="list-disc list-inside"></ul>
                 </div>
             `;
             
-            const guessInput = document.getElementById('guess-input');
-            const submitButton = document.getElementById('submit-guess');
-            const guessedList = document.getElementById('guessed-list');
+            document.getElementById('submit-product-guess').addEventListener('click', checkProductGuess);
+            document.getElementById('give-up').addEventListener('click', endGame);
 
-            guessInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    checkProductGuess();
-                }
-            });
-            submitButton.addEventListener('click', checkProductGuess);
-            guessInput.focus();
-
-            if (gameSettings.timer !== 'unlimited') {
-                 // Restart timer for this game
-                 if (timer) clearInterval(timer);
-                 timeRemaining = gameSettings.timer;
-                 const timerEl = document.getElementById('game-timer');
-                 timerEl.style.display = 'block';
-                 timerEl.textContent = `Time: ${timeRemaining}s`;
-                 timer = setInterval(() => {
-                    timeRemaining--;
-                    timerEl.textContent = `Time: ${timeRemaining}s`;
-                    if (timeRemaining <= 0) {
-                        clearInterval(timer);
-                        showUserMessage(`Time's up! You guessed ${score} cards.`, 2000);
-                        gameActive = false;
-                        setTimeout(endGame, 2000);
-                    }
-                 }, 1000);
-            }
+            // Start the first guess
+            promptForProductGuess();
         }
-        function checkProductGuess() {
-            if (!gameActive) return;
-            const guessInput = document.getElementById('guess-input');
-            const guess = guessInput.value.trim().toLowerCase();
-            if (guess === '') {
-                showUserMessage('Please enter a card name.', 1500);
+
+        function promptForProductGuess() {
+            const unguessedCards = productCards.filter(card => !guessedCards.includes(card.name));
+            if (unguessedCards.length === 0) {
+                endGame();
                 return;
             }
+            const randomCard = unguessedCards[Math.floor(Math.random() * unguessedCards.length)];
+            document.getElementById('card-art').src = randomCard.card_images[0].image_url_art;
+            document.getElementById('card-art').alt = randomCard.name;
+        }
 
-            const card = productCards.find(c => c.name.toLowerCase() === guess);
-            if (card) {
-                if (guessedCards.includes(card.name)) {
-                    showUserMessage('You already guessed that card!', 1500);
-                } else {
-                    guessedCards.push(card.name);
-                    score++;
-                    document.getElementById('score').textContent = score;
-                    const listItem = document.createElement('li');
-                    listItem.textContent = card.name;
-                    document.getElementById('guessed-list').appendChild(listItem);
-                    showUserMessage('Correct!', 1500);
-                }
+        function checkProductGuess() {
+            const input = document.getElementById('product-input');
+            const guess = input.value.trim().toLowerCase();
+            const correctCard = productCards.find(card => card.name.toLowerCase() === guess);
+
+            if (correctCard && !guessedCards.includes(correctCard.name)) {
+                guessedCards.push(correctCard.name);
+                document.getElementById('guessed-ul').innerHTML += `<li>${correctCard.name}</li>`;
+                score++;
+                document.getElementById('score').textContent = score;
+                showUserMessage("Correct!", 1500);
+                input.value = '';
+                promptForProductGuess();
             } else {
-                showUserMessage('That card is not in this set or the name is incorrect.', 1500);
+                showUserMessage("Incorrect or already guessed!", 1500);
             }
-            guessInput.value = '';
-            guessInput.focus();
         }
 
         // Small World Challenge
         function startSmallWorldChallenge() {
-            let found = false;
-            let attemptCount = 0;
-            const maxAttempts = 50;
-            let cardA, cardB, bridgeCard;
+            const monsterCards = cards.filter(card => card.type && (card.type.includes('Monster') || card.type.includes('Link') || card.type.includes('Synchro') || card.type.includes('Fusion') || card.type.includes('Xyz')));
+            
+            let startCard = null;
+            let bridgeCard = null;
+            let endCard = null;
 
-            while (!found && attemptCount < maxAttempts) {
-                cardA = cards[Math.floor(Math.random() * cards.length)];
-                cardB = cards[Math.floor(Math.random() * cards.length)];
-
-                // Ensure A and B don't have shared properties
-                const sharedPropsAB = getSharedProperties(cardA, cardB);
-                if (sharedPropsAB.count > 0) {
-                    attemptCount++;
+            // Find a valid chain
+            let foundChain = false;
+            let attempts = 0;
+            const maxAttempts = 500;
+            
+            while (!foundChain && attempts < maxAttempts) {
+                attempts++;
+                startCard = monsterCards[Math.floor(Math.random() * monsterCards.length)];
+                bridgeCard = monsterCards[Math.floor(Math.random() * monsterCards.length)];
+                endCard = monsterCards[Math.floor(Math.random() * monsterCards.length)];
+                
+                // Ensure unique cards
+                if (startCard.name === bridgeCard.name || startCard.name === endCard.name || bridgeCard.name === endCard.name) {
                     continue;
                 }
-
-                // Find a bridge card
-                bridgeCard = cards.find(c => {
-                    if (c.name === cardA.name || c.name === cardB.name) return false;
-                    const sharedPropsAC = getSharedProperties(cardA, c);
-                    const sharedPropsBC = getSharedProperties(cardB, c);
-
-                    return sharedPropsAC.count === 1 && sharedPropsBC.count === 1 && sharedPropsAC.names[0] !== sharedPropsBC.names[0];
-                });
-
-                if (bridgeCard) {
-                    found = true;
-                    currentCards = [cardA, cardB, bridgeCard];
-                    correctAnswer = bridgeCard.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+                
+                // Check if start can bridge to end via bridge
+                if (checkSmallWorldProperties(startCard, bridgeCard, gameSettings.properties) && checkSmallWorldProperties(bridgeCard, endCard, gameSettings.properties)) {
+                    foundChain = true;
                 }
-                attemptCount++;
             }
 
-            if (!found) {
-                document.getElementById('game-content').innerHTML = `<p class="text-red-400">Could not find a valid challenge. Please try again.</p>`;
-                if (timer) clearInterval(timer);
-                return;
+            if (!foundChain) {
+                 document.getElementById('game-content').innerHTML = `<p class="text-red-400">Could not find a valid "Small World" chain with your selected properties. Please try again.</p>`;
+                 if (timer) clearInterval(timer);
+                 return;
             }
 
             const gameContent = document.getElementById('game-content');
             gameContent.innerHTML = `
-                <p class="text-xl mb-4">Find a "bridge" monster that connects these two:</p>
-                <div class="flex flex-col sm:flex-row gap-4 items-center justify-center mb-4">
-                    <img src="${cardA.card_images[0].image_url}" onerror="this.onerror=null;this.src='https://placehold.co/150x220/333333/FFFFFF?text=Card+Image+Missing';" alt="${cardA.name}" class="rounded-lg shadow-lg w-1/2 sm:w-1/4">
-                    <span class="text-3xl font-bold">↔️</span>
-                    <img src="${cardB.card_images[0].image_url}" onerror="this.onerror=null;this.src='https://placehold.co/150x220/333333/FFFFFF?text=Card+Image+Missing';" alt="${cardB.name}" class="rounded-lg shadow-lg w-1/2 sm:w-1/4">
+                <p class="text-xl mb-4">What card can be used as a "Small World" bridge?</p>
+                <p class="mb-4 text-sm text-gray-400">A valid bridge must share EXACTLY ONE property (Attribute, Type, Level/Rank, ATK/DEF) with both the Start and End cards.</p>
+                <div class="what-card-is-older-container">
+                    <div class="small-world-card-container">
+                        <h3 class="font-bold mb-2">Start Card</h3>
+                        <img class="card-image" src="${startCard.card_images[0].image_url}" alt="${startCard.name}">
+                        <p class="mt-2 text-lg font-semibold">${startCard.name}</p>
+                    </div>
+                    <div class="small-world-card-container">
+                        <h3 class="font-bold mb-2">End Card</h3>
+                        <img class="card-image" src="${endCard.card_images[0].image_url}" alt="${endCard.name}">
+                        <p class="mt-2 text-lg font-semibold">${endCard.name}</p>
+                    </div>
                 </div>
-                <div class="flex flex-col items-center gap-2 mt-4 w-full max-w-sm mx-auto">
-                    <input type="text" id="bridge-input" class="w-full rounded-lg px-4 py-2 text-center bg-gray-700 text-gray-100" placeholder="Type bridge monster name here">
-                    <button id="submit-bridge" class="button w-full">Submit</button>
+                <div class="mt-6 flex flex-col items-center">
+                    <input type="text" id="bridge-input" class="w-full max-w-sm p-2 rounded-lg text-black" placeholder="Type the bridge card name...">
+                    <button id="submit-bridge-guess" class="button mt-4">Submit</button>
                 </div>
             `;
-            const bridgeInput = document.getElementById('bridge-input');
-            document.getElementById('submit-bridge').addEventListener('click', () => checkBridgeGuess(bridgeInput.value));
-            bridgeInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') checkBridgeGuess(bridgeInput.value);
+            correctAnswer = bridgeCard.name;
+            document.getElementById('submit-bridge-guess').addEventListener('click', () => {
+                const guess = document.getElementById('bridge-input').value.trim();
+                if (guess.toLowerCase() === correctAnswer.toLowerCase()) {
+                    showUserMessage("Correct!", 2000);
+                    score++;
+                    document.getElementById('score').textContent = score;
+                    setTimeout(nextRound, 2000);
+                } else {
+                    showUserMessage(`Incorrect! The correct answer was ${correctAnswer}.`, 3000);
+                    setTimeout(nextRound, 3000);
+                }
             });
-            bridgeInput.focus();
         }
 
-        function getSharedProperties(card1, card2) {
-            const shared = [];
-            const propertiesToCheck = gameSettings.properties;
-            
-            if (propertiesToCheck.includes('attribute') && card1.attribute === card2.attribute) {
-                shared.push('attribute');
-            }
-            if (propertiesToCheck.includes('type') && card1.type === card2.type) {
-                shared.push('type');
-            }
-            if (propertiesToCheck.includes('level') && card1.level === card2.level) {
-                shared.push('level');
-            }
-            if (propertiesToCheck.includes('atk-def') && (card1.atk === card2.atk || card1.def === card2.def)) {
-                 shared.push('atk-def');
-            }
-            return { count: shared.length, names: shared };
-        }
-        window.checkBridgeGuess = function(guess) {
+
+        // Universal Answer Handler
+        function handleAnswer(event) {
             if (!gameActive) return;
+
+            clearInterval(timer);
             gameActive = false;
-            const normalizedGuess = guess.toLowerCase().replace(/[^a-z0-9]/g, '');
-            const isCorrect = normalizedGuess === correctAnswer;
-            if (isCorrect) {
+
+            const guessedName = event.target.dataset.cardName;
+            
+            if (guessedName === correctAnswer) {
+                showUserMessage("Correct!", 2000);
                 score++;
-                showUserMessage('Correct!', 2000);
+                document.getElementById('score').textContent = score;
             } else {
-                showUserMessage(`Wrong! The correct answer was ${currentCards[2].name}.`, 2000);
+                showUserMessage(`Wrong! The correct answer was ${correctAnswer}.`, 3000);
             }
-            document.getElementById('score').textContent = score;
+
             setTimeout(nextRound, 2000);
         }
+
+        // Initial setup for the What Card is Older? sets input
+        document.getElementById('what-card-is-older-sets').addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.toLowerCase() === 'all') {
+                e.target.value = 'All';
+            }
+        });
     </script>
 </body>
 </html>
